@@ -6,18 +6,140 @@ set -u # u: all references to variables that have not been previously defined ca
 
 BOOTSTRAP_TERRAFORM_HOME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-TERRAFORM_VERSION=$1
-AWS_PROVIDER_VERSION=$2
-COMPANY=$3
-REPOSITORY_URL=$4
-AWS_PROFILE=$5
-AWS_REGION=$6
-PROJECT=$7
-TERRAFORM_REMOTE_STATE_S3_BUCKET="${COMPANY}-terraform-remote-state"
+usage() {
+  cat <<'EOF'
+Usage:
+  bootstrap_terraform.sh \
+    --terraform-version <version> \
+    --aws-provider-version <version> \
+    --company <name> \
+    --repository-url <url> \
+    --aws-profile <profile> \
+    --aws-region <region> \
+    --project <name> \
+    [--environments "production, staging, development"]
+
+Required:
+  --terraform-version
+  --aws-provider-version
+  --company
+  --repository-url
+  --aws-profile
+  --aws-region
+  --project
+
+Optional:
+  --environments    Comma-separated list (default: "production")
+  -h, --help        Show this help
+EOF
+}
+
+ensure_value() {
+  local opt="$1"
+  local arg_count="$2"
+  local val="${3-}"
+  if [[ "$arg_count" -lt 2 || -z "$val" ]]; then
+    echo "Missing value for ${opt}" >&2
+    usage
+    exit 1
+  fi
+}
+
+missing_deps=()
+for cmd in aws terraform envsubst; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    missing_deps+=("$cmd")
+  fi
+done
+
+if [[ ${#missing_deps[@]} -gt 0 ]]; then
+  echo "Missing required commands: ${missing_deps[*]}" >&2
+  echo "Please install the missing dependencies and retry." >&2
+  exit 1
+fi
+
+TERRAFORM_VERSION=""
+AWS_PROVIDER_VERSION=""
+COMPANY=""
+REPOSITORY_URL=""
+AWS_PROFILE=""
+AWS_REGION=""
+PROJECT=""
 # The ENVIRONMENTS can be a comma-separated list of environments,
 # e.g. "production, staging, development", which will be used to create separate folders for each environment under the terraform folder.
 # It will have the default value `production` if not provided.
-ENVIRONMENTS=${8:-production}
+ENVIRONMENTS="production"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --terraform-version)
+      ensure_value "$1" "$#" "${2-}"
+      TERRAFORM_VERSION="${2-}"
+      shift 2
+      ;;
+    --aws-provider-version)
+      ensure_value "$1" "$#" "${2-}"
+      AWS_PROVIDER_VERSION="${2-}"
+      shift 2
+      ;;
+    --company)
+      ensure_value "$1" "$#" "${2-}"
+      COMPANY="${2-}"
+      shift 2
+      ;;
+    --repository-url)
+      ensure_value "$1" "$#" "${2-}"
+      REPOSITORY_URL="${2-}"
+      shift 2
+      ;;
+    --aws-profile)
+      ensure_value "$1" "$#" "${2-}"
+      AWS_PROFILE="${2-}"
+      shift 2
+      ;;
+    --aws-region)
+      ensure_value "$1" "$#" "${2-}"
+      AWS_REGION="${2-}"
+      shift 2
+      ;;
+    --project)
+      ensure_value "$1" "$#" "${2-}"
+      PROJECT="${2-}"
+      shift 2
+      ;;
+    --environments)
+      ensure_value "$1" "$#" "${2-}"
+      ENVIRONMENTS="${2-}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+missing=()
+[[ -z "$TERRAFORM_VERSION" ]] && missing+=("--terraform-version")
+[[ -z "$AWS_PROVIDER_VERSION" ]] && missing+=("--aws-provider-version")
+[[ -z "$COMPANY" ]] && missing+=("--company")
+[[ -z "$REPOSITORY_URL" ]] && missing+=("--repository-url")
+[[ -z "$AWS_PROFILE" ]] && missing+=("--aws-profile")
+[[ -z "$AWS_REGION" ]] && missing+=("--aws-region")
+[[ -z "$PROJECT" ]] && missing+=("--project")
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo "Missing required arguments: ${missing[*]}" >&2
+  usage
+  exit 1
+fi
+
+TERRAFORM_REMOTE_STATE_S3_BUCKET="${COMPANY}-terraform-remote-state"
 
 #-------------------- s3 bucket -------------------------------------------------------------------------#
 # Check whether the S3 bucket for Terraform remote state exists or not. If it does not exist, create it. #

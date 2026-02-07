@@ -14,19 +14,42 @@ Example call from a repository named `my-fantastic-web-app`:
 ## For `production` Environment
 
 ```bash
-bootstrap_terraform.sh 1.14.4 6.31.0 pmatsinopoulos 'https://github.com/pmatsinopoulos/my-fantastic-web-app' 'aws-profile-default' eu-west-1 my-fantastic-web-app
+bootstrap_terraform.sh \
+  --terraform-version 1.14.4 \
+  --aws-provider-version 6.31.0 \
+  --company pmatsinopoulos \
+  --repository-url 'https://github.com/pmatsinopoulos/my-fantastic-web-app' \
+  --aws-profile 'aws-profile-default' \
+  --aws-region eu-west-1 \
+  --project my-fantastic-web-app
 ```
 
 ## For `staging` environment:
 
 ```bash
-bootstrap_terraform.sh 1.14.4 6.31.0 pmatsinopoulos 'https://github.com/pmatsinopoulos/my-fantastic-web-app' 'aws-profile-default' eu-west-1 my-fantastic-web-app staging
+bootstrap_terraform.sh \
+  --terraform-version 1.14.4 \
+  --aws-provider-version 6.31.0 \
+  --company pmatsinopoulos \
+  --repository-url 'https://github.com/pmatsinopoulos/my-fantastic-web-app' \
+  --aws-profile 'aws-profile-default' \
+  --aws-region eu-west-1 \
+  --project my-fantastic-web-app \
+  --environments staging
 ```
 
 ## For many environments at once:
 
 ```bash
-bootstrap_terraform.sh 1.14.4 6.31.0 pmatsinopoulos 'https://github.com/pmatsinopoulos/my-fantastic-web-app' 'aws-profile-default' eu-west-1 my-fantastic-web-app 'production,staging'
+bootstrap_terraform.sh \
+  --terraform-version 1.14.4 \
+  --aws-provider-version 6.31.0 \
+  --company pmatsinopoulos \
+  --repository-url 'https://github.com/pmatsinopoulos/my-fantastic-web-app' \
+  --aws-profile 'aws-profile-default' \
+  --aws-region eu-west-1 \
+  --project my-fantastic-web-app \
+  --environments 'production,staging'
 ```
 
 ## Notes
