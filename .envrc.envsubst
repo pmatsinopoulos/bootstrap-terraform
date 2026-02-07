@@ -1,0 +1,10 @@
+export AWS_PROFILE='${aws_profile}'
+export AWS_REGION=${aws_region}
+export COMPANY='${company}'
+export PROJECT='${project}'
+
+# Terraform input variables values
+# ---------------------------------
+export TF_VAR_project='${project}'
+export TF_VAR_aws_region=${aws_region}
+export TF_VAR_company='${company}'

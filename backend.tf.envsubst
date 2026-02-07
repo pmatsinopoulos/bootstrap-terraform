@@ -1,0 +1,9 @@
+terraform {
+  backend "s3" {
+    bucket       = "${terraform_remote_state_s3_bucket_name}"
+    key          = "${environment}/terraform-${project}.state"
+    region       = "${aws_region}"
+    encrypt      = true
+    use_lockfile = true
+  }
+}

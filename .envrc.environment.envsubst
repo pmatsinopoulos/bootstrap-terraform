@@ -1,0 +1,6 @@
+export ENVIRONMENT=${environment}
+
+dotenv_if_exists ../../.env.${environment}
+source_env ../.envrc
+
+export TF_VAR_environment='${environment}'

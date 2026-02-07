@@ -1,0 +1,19 @@
+variable "company" {
+  type = string
+  nullable = false
+}
+
+variable "project" {
+  type = string
+  nullable = false
+}
+
+variable "aws_region" {
+  type = string
+  nullable = false
+}
+
+variable "environment" {
+  type = string
+  nullable = false
+}
