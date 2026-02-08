@@ -46,7 +46,7 @@ ensure_value() {
 }
 
 missing_deps=()
-for cmd in aws terraform envsubst; do
+for cmd in aws terraform envsubst direnv; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     missing_deps+=("$cmd")
   fi
