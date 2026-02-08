@@ -5,6 +5,7 @@ set -e # e: exit if any command has a non-zero exit status
 set -u # u: all references to variables that have not been previously defined cause an error
 
 BOOTSTRAP_TERRAFORM_HOME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKING_DIR="$(pwd)"
 
 usage() {
   cat <<'EOF'
@@ -42,6 +43,38 @@ ensure_value() {
     echo "Missing value for ${opt}" >&2
     usage
     exit 1
+  fi
+}
+
+ensure_terraform_gitignore() {
+  local working_dir="${1-}"
+  local gitignore_path="${working_dir}/.gitignore"
+  if [[ ! -f "${gitignore_path}" ]]; then
+    return 0
+  fi
+
+  local terraform_gitignore_lines
+  terraform_gitignore_lines=(
+    "# Terraform"
+    "**/.terraform/"
+    "**/*.tfstate"
+    "**/*.tfstate.*"
+    "**/crash.log"
+    "**/crash.*.log"
+    "**/*.tfplan"
+  )
+
+  local terraform_gitignore_line
+  local appended_any=false
+  for terraform_gitignore_line in "${terraform_gitignore_lines[@]}"; do
+    if ! grep -Fxq "${terraform_gitignore_line}" "${gitignore_path}"; then
+      echo "${terraform_gitignore_line}" >> "${gitignore_path}"
+      appended_any=true
+    fi
+  done
+
+  if [[ "${appended_any}" == true ]] && [[ -n "$(tail -n 1 "${gitignore_path}")" ]]; then
+    printf '\n' >> "${gitignore_path}"
   fi
 }
 
@@ -236,5 +269,7 @@ for raw_environment in "${environment_list[@]}"; do
 
   popd > /dev/null
 done
+
+ensure_terraform_gitignore "${WORKING_DIR}"
 
 # TODO: amend the ".gitignore" file with ignore necessary for terraform.
