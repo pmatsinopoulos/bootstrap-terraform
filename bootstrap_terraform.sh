@@ -5,6 +5,7 @@ set -e # e: exit if any command has a non-zero exit status
 set -u # u: all references to variables that have not been previously defined cause an error
 
 BOOTSTRAP_TERRAFORM_HOME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATES_DIRECTORY="${BOOTSTRAP_TERRAFORM_HOME_DIR}/templates"
 WORKING_DIR="$(pwd)"
 
 usage() {
@@ -195,7 +196,7 @@ export aws_region=${AWS_REGION}
 export company=${COMPANY}
 export project=${PROJECT}
 if [[ ! -f .envrc ]]; then
-  envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/.envrc.envsubst" > .envrc
+  envsubst < "${TEMPLATES_DIRECTORY}/.envrc.envsubst" > .envrc
 fi
 
 #-------------------- main.tf --------------------#
@@ -203,7 +204,7 @@ echo "Preparing ${PWD}/main.tf file..."
 export aws_provider_version=${AWS_PROVIDER_VERSION}
 export terraform_version=${TERRAFORM_VERSION}
 if [[ ! -f main.tf ]]; then
-  envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/main.tf.envsubst" > main.tf
+  envsubst < "${TEMPLATES_DIRECTORY}/main.tf.envsubst" > main.tf
   terraform fmt -list=false main.tf
 fi
 
@@ -211,14 +212,14 @@ fi
 echo "Preparing ${PWD}/providers.tf file..."
 export tf_repo=${REPOSITORY_URL}
 if [[ ! -f providers.tf ]]; then
-  envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/providers.tf.envsubst" > providers.tf
+  envsubst < "${TEMPLATES_DIRECTORY}/providers.tf.envsubst" > providers.tf
   terraform fmt -list=false providers.tf
 fi
 
 #-------------------- variables.tf --------------------#
 echo "Preparing ${PWD}/variables.tf file..."
 if [[ ! -f variables.tf ]]; then
-  envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/variables.tf.envsubst" > variables.tf
+  envsubst < "${TEMPLATES_DIRECTORY}/variables.tf.envsubst" > variables.tf
   terraform fmt -list=false variables.tf
 fi
 
@@ -234,7 +235,7 @@ for raw_environment in "${environment_list[@]}"; do
   echo "Preparing ${PWD}/.envrc file..."
   export environment="${environment}"
   if [[ ! -f .envrc ]]; then
-    envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/.envrc.environment.envsubst" > .envrc
+    envsubst < "${TEMPLATES_DIRECTORY}/.envrc.environment.envsubst" > .envrc
   fi
 
   eval "$(direnv export bash)"
@@ -242,7 +243,7 @@ for raw_environment in "${environment_list[@]}"; do
   echo "Preparing ${PWD}/backend.tf file..."
   export terraform_remote_state_s3_bucket_name="${TERRAFORM_REMOTE_STATE_S3_BUCKET}"
   if [[ ! -f backend.tf ]]; then
-    envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/backend.tf.envsubst" > backend.tf
+    envsubst < "${TEMPLATES_DIRECTORY}/backend.tf.envsubst" > backend.tf
     terraform fmt -list=false backend.tf
   fi
 

@@ -1,7 +1,7 @@
 # Without +alias+ this is the default +aws+ provider
 #
 provider "aws" {
-  region = var.region
+  region = var.aws_region
   default_tags {
     tags = {
       project     = var.project

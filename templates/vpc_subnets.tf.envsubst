@@ -1,0 +1,31 @@
+resource "aws_subnet" "main" {
+  for_each = var.vpc_subnets
+
+  availability_zone = "${var.aws_region}${each.value.region_suffix}"
+  cidr_block        = each.value.cidr_block
+  tags = {
+    "Name" = "${var.project}-${var.environment}-subnet-${each.key}"
+  }
+
+  vpc_id = aws_vpc.main.id
+}
+
+output "subnet_id_1" {
+  value       = aws_subnet.main[1].id
+  description = "Subnet ID for the first subnet"
+}
+
+resource "aws_route_table_association" "public_subnet_1" {
+  subnet_id      = element([for k, v in var.vpc_subnets : aws_subnet.main[k].id if aws_subnet.main[k].availability_zone == "${var.aws_region}a"], 0)
+  route_table_id = aws_route_table.routes.id
+}
+
+resource "aws_route_table_association" "public_subnet_2" {
+  subnet_id      = element([for k, v in var.vpc_subnets : aws_subnet.main[k].id if aws_subnet.main[k].availability_zone == "${var.aws_region}b"], 0)
+  route_table_id = aws_route_table.routes.id
+}
+
+resource "aws_route_table_association" "public_subnet_3" {
+  subnet_id      = element([for k, v in var.vpc_subnets : aws_subnet.main[k].id if aws_subnet.main[k].availability_zone == "${var.aws_region}c"], 0)
+  route_table_id = aws_route_table.routes.id
+}

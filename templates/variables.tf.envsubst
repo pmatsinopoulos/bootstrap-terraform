@@ -1,0 +1,33 @@
+variable "company" {
+  type = string
+  nullable = false
+}
+
+variable "project" {
+  type = string
+  nullable = false
+}
+
+variable "aws_region" {
+  type = string
+  nullable = false
+}
+
+variable "environment" {
+  type = string
+  nullable = false
+}
+
+variable "vpc_cidr_block" {
+  type     = string
+  nullable = false
+}
+
+variable "vpc_subnets" {
+  type = map(object({
+    cidr_block    = string
+    region_suffix = string
+  }))
+  description = "A map of CIDR blocks and regions for each one of the three subnets."
+  nullable    = false
+}
