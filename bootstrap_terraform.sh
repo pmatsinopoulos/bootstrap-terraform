@@ -204,7 +204,7 @@ for raw_environment in "${environment_list[@]}"; do
     envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/.envrc.environment.envsubst" > .envrc
   fi
 
-  direnv allow
+  eval "$(direnv export bash)"
 
   echo "Preparing ${PWD}/backend.tf file..."
   export terraform_remote_state_s3_bucket_name="${TERRAFORM_REMOTE_STATE_S3_BUCKET}"
@@ -228,6 +228,9 @@ for raw_environment in "${environment_list[@]}"; do
   echo "Running terraform providers lock..."
   terraform providers lock --platform=linux_amd64 --platform=darwin_amd64 --platform=windows_amd64
 
+  echo "Current AWS-related environment variables:"
+  printenv | grep 'AWS' || true
+
   echo "Running terraform init..."
   terraform init
 
@@ -235,5 +238,3 @@ for raw_environment in "${environment_list[@]}"; do
 done
 
 # TODO: amend the ".gitignore" file with ignore necessary for terraform.
-# TODO: run terraform init for each environment to initialize the terraform working directory and download the necessary provider plugins.
-# TODO: run the terraform providers ? for linux, macos and windows?
