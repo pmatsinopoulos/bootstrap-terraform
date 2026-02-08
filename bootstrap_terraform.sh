@@ -5,6 +5,7 @@ set -e # e: exit if any command has a non-zero exit status
 set -u # u: all references to variables that have not been previously defined cause an error
 
 BOOTSTRAP_TERRAFORM_HOME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKING_DIR="$(pwd)"
 
 usage() {
   cat <<'EOF'
@@ -45,8 +46,40 @@ ensure_value() {
   fi
 }
 
+ensure_terraform_gitignore() {
+  local working_dir="${1-}"
+  local gitignore_path="${working_dir}/.gitignore"
+  if [[ ! -f "${gitignore_path}" ]]; then
+    return 0
+  fi
+
+  local terraform_gitignore_lines
+  terraform_gitignore_lines=(
+    "# Terraform"
+    "**/.terraform/"
+    "**/*.tfstate"
+    "**/*.tfstate.*"
+    "**/crash.log"
+    "**/crash.*.log"
+    "**/*.tfplan"
+  )
+
+  local terraform_gitignore_line
+  local appended_any=false
+  for terraform_gitignore_line in "${terraform_gitignore_lines[@]}"; do
+    if ! grep -Fxq "${terraform_gitignore_line}" "${gitignore_path}"; then
+      echo "${terraform_gitignore_line}" >> "${gitignore_path}"
+      appended_any=true
+    fi
+  done
+
+  if [[ "${appended_any}" == true ]] && [[ -n "$(tail -n 1 "${gitignore_path}")" ]]; then
+    printf '\n' >> "${gitignore_path}"
+  fi
+}
+
 missing_deps=()
-for cmd in aws terraform envsubst; do
+for cmd in aws terraform envsubst direnv; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     missing_deps+=("$cmd")
   fi
@@ -204,6 +237,8 @@ for raw_environment in "${environment_list[@]}"; do
     envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/.envrc.environment.envsubst" > .envrc
   fi
 
+  eval "$(direnv export bash)"
+
   echo "Preparing ${PWD}/backend.tf file..."
   export terraform_remote_state_s3_bucket_name="${TERRAFORM_REMOTE_STATE_S3_BUCKET}"
   if [[ ! -f backend.tf ]]; then
@@ -223,9 +258,18 @@ for raw_environment in "${environment_list[@]}"; do
   echo "Creating an empty terraform.tfvars file for environment-specific variable values"
   touch terraform.tfvars
 
+  echo "Running terraform providers lock..."
+  terraform providers lock --platform=linux_amd64 --platform=darwin_amd64 --platform=windows_amd64
+
+  echo "Current AWS-related environment variables:"
+  printenv | grep 'AWS' || true
+
+  echo "Running terraform init..."
+  terraform init
+
   popd > /dev/null
 done
 
+ensure_terraform_gitignore "${WORKING_DIR}"
+
 # TODO: amend the ".gitignore" file with ignore necessary for terraform.
-# TODO: run terraform init for each environment to initialize the terraform working directory and download the necessary provider plugins.
-# TODO: run the terraform providers ? for linux, macos and windows?
