@@ -204,6 +204,8 @@ for raw_environment in "${environment_list[@]}"; do
     envsubst < "${BOOTSTRAP_TERRAFORM_HOME_DIR}/.envrc.environment.envsubst" > .envrc
   fi
 
+  direnv allow
+
   echo "Preparing ${PWD}/backend.tf file..."
   export terraform_remote_state_s3_bucket_name="${TERRAFORM_REMOTE_STATE_S3_BUCKET}"
   if [[ ! -f backend.tf ]]; then
@@ -222,6 +224,12 @@ for raw_environment in "${environment_list[@]}"; do
 
   echo "Creating an empty terraform.tfvars file for environment-specific variable values"
   touch terraform.tfvars
+
+  echo "Running terraform providers lock..."
+  terraform providers lock --platform=linux_amd64 --platform=darwin_amd64 --platform=windows_amd64
+
+  echo "Running terraform init..."
+  terraform init
 
   popd > /dev/null
 done
