@@ -7,6 +7,15 @@ Clone this repository.
 Add the root folder of this repository to your $PATH environment variable
 so that you can call it from any other folder/repository you want to use it for.
 
+# Pre-requisites
+
+- Works with AWS
+- AWS cli needs to be installed
+- AWS_PROFILE needs to be configured with all the necessary privileges to create an S3 bucket to store the state remotely.
+- [direnv](https://direnv.net/)
+- [terraform](https://developer.hashicorp.com/terraform/install)
+- `envsubst`
+
 # Usage
 
 Example call from a repository named `my-fantastic-web-app`:
