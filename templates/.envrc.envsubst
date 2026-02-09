@@ -8,3 +8,4 @@ export PROJECT='${project}'
 export TF_VAR_project='${project}'
 export TF_VAR_aws_region=${aws_region}
 export TF_VAR_company='${company}'
+export TF_VAR_db_access_details="{\"username\":\"${DATABASE_USERNAME}\",\"password\":\"${DATABASE_PASSWORD}\"}"

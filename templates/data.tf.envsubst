@@ -1,0 +1,5 @@
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy" "rds_enhanced_monitoring_role" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}

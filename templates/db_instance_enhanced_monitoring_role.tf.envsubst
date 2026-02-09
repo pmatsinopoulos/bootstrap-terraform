@@ -1,0 +1,33 @@
+resource "aws_iam_role" "db_instance_enhanced_monitoring_role" {
+  name = "${var.project}-${var.environment}-db-enh-mon-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "monitoring.rds.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+        Condition = {
+          StringLike = {
+            "aws:SourceArn" = "arn:aws:rds:${var.aws_region}:${local.current_account_id}:db:*"
+          },
+          StringEquals = {
+            "aws:SourceAccount" = "${local.current_account_id}"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = {
+    "Name" = "${var.project}-db-enh-mon-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "db_instance_enhanced_monitoring_role" {
+  policy_arn = data.aws_iam_policy.rds_enhanced_monitoring_role.arn
+  role       = aws_iam_role.db_instance_enhanced_monitoring_role.name
+}

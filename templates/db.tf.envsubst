@@ -1,0 +1,71 @@
+locals {
+  db_identifier = "${var.project}-${var.environment}"
+}
+
+resource "aws_db_instance" "db" {
+  identifier     = local.db_identifier
+  instance_class = var.db_server.instance_class
+
+  allocated_storage     = var.db_server.allocated_storage
+  max_allocated_storage = var.db_server.max_allocated_storage
+  storage_type          = var.db_server.storage_type
+  iops                  = var.db_server.provisioned_iops
+
+  apply_immediately = true
+
+  engine              = "postgres"
+  engine_version      = var.db_server.engine_version
+  username            = var.db_access_details.username
+  password            = var.db_access_details.password
+  port                = var.db_server.port
+  db_name             = var.db_server.db_name
+  publicly_accessible = var.db_server.publicly_accessible
+
+  allow_major_version_upgrade = false
+  auto_minor_version_upgrade  = false
+  availability_zone           = "${var.aws_region}a"
+
+  db_subnet_group_name   = aws_db_subnet_group.db.id
+  vpc_security_group_ids = [aws_vpc.main.default_security_group_id, aws_security_group.db.id]
+
+  backup_retention_period  = var.db_backup_config.rds_service_backup_retention_days
+  backup_window            = "03:05-07:00"
+  delete_automated_backups = false
+  maintenance_window       = "Mon:00:00-Mon:03:00"
+
+  deletion_protection = false
+
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+
+  skip_final_snapshot = true
+
+  # Performance Insights
+  # ------------------------------------------------------
+  performance_insights_enabled          = true
+  performance_insights_retention_period = var.db_server.performance_insights_retention_period
+  database_insights_mode                = var.db_server.database_insights_mode
+
+  # Enhanced Monitoring
+  # ------------------------------------------------------
+  monitoring_interval = 60
+  monitoring_role_arn = aws_iam_role.db_instance_enhanced_monitoring_role.arn
+
+  ca_cert_identifier = "rds-ca-rsa2048-g1"
+
+  tags = {
+    "Name" = "${var.project}-${var.environment}"
+  }
+  copy_tags_to_snapshot = true
+}
+
+output "db_endpoint" {
+  value = aws_db_instance.db.endpoint
+
+  description = "This is the endpoint of the RDS db host to connect to"
+}
+
+output "db_identifier" {
+  value = aws_db_instance.db.identifier
+
+  description = "This is the RDS/database db identifier"
+}

@@ -81,7 +81,7 @@ done
 #   exit 1
 # fi
 
-cd terraform
+pushd terraform > /dev/null
 
 eval "$(direnv export bash)"
 
@@ -154,3 +154,5 @@ for raw_environment in "${environment_list[@]}"; do
 
   popd > /dev/null
 done
+
+popd > /dev/null
