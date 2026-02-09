@@ -51,6 +51,7 @@ EOF
 }
 
 while [[ $# -gt 0 ]]; do
+  case "$1" in
     --environments)
       ensure_value "$1" "$#" "${2-}"
       ENVIRONMENTS="${2-}"
@@ -81,6 +82,8 @@ done
 # fi
 
 cd terraform
+
+eval "$(direnv export bash)"
 
 #-------------------- access_to_internet.tf --------------------#
 echo "Preparing ${PWD}/access_to_internet.tf file..."
@@ -128,7 +131,11 @@ for raw_environment in "${environment_list[@]}"; do
   environment="$(echo "${raw_environment}" | xargs)"
   [[ -z "${environment}" ]] && continue
 
+  echo "*************************************** Environment: ${environment} ***************************************"
+
   pushd "${environment}" > /dev/null
+
+  eval "$(direnv export bash)"
 
   echo "Creating symbolic link for access_to_internet.tf"
   ln -sfn ../access_to_internet.tf access_to_internet.tf

@@ -198,6 +198,8 @@ export project=${PROJECT}
 if [[ ! -f .envrc ]]; then
   envsubst < "${TEMPLATES_DIRECTORY}/.envrc.envsubst" > .envrc
 fi
+direnv allow .
+eval "$(direnv export bash)"
 
 #-------------------- main.tf --------------------#
 echo "Preparing ${PWD}/main.tf file..."
@@ -229,6 +231,8 @@ for raw_environment in "${environment_list[@]}"; do
   environment="$(echo "${raw_environment}" | xargs)"
   [[ -z "${environment}" ]] && continue
 
+  echo "*************************************** Environment: ${environment} ***************************************"
+
   mkdir -p "${environment}"
   pushd "${environment}" > /dev/null
 
@@ -238,6 +242,7 @@ for raw_environment in "${environment_list[@]}"; do
     envsubst < "${TEMPLATES_DIRECTORY}/.envrc.environment.envsubst" > .envrc
   fi
 
+  direnv allow .
   eval "$(direnv export bash)"
 
   echo "Preparing ${PWD}/backend.tf file..."
@@ -273,4 +278,7 @@ done
 
 ensure_terraform_gitignore "${WORKING_DIR}"
 
-# TODO: amend the ".gitignore" file with ignore necessary for terraform.
+#-------------------- Network ---------------------#
+echo "********************* Network Bootstrap *********************"
+
+bootstrap_terraform_network.sh --environments "${ENVIRONMENTS}"
