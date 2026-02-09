@@ -187,7 +187,7 @@ fi
 
 #-------------------- terraform folder (non-environment specific) --------------------#
 mkdir -p terraform
-cd terraform
+pushd terraform > /dev/null
 
 #------------------- .envrc --------------------#
 echo "Preparing ${PWD}/.envrc file..."
@@ -278,7 +278,10 @@ done
 
 ensure_terraform_gitignore "${WORKING_DIR}"
 
+popd > /dev/null
+
 #-------------------- Network ---------------------#
+
 echo "********************* Network Bootstrap *********************"
 
 bootstrap_terraform_network.sh --environments "${ENVIRONMENTS}"
