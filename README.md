@@ -1,4 +1,5 @@
-I use this script to add _terraform_ code in any **existing** repository.
+I use scripts to add _terraform_ code in any **existing** repository. This makes me bootstrap
+terraform code faster.
 
 # Installation
 
