@@ -141,6 +141,16 @@ while [[ $# -gt 0 ]]; do
       PROJECT="${2-}"
       shift 2
       ;;
+    --ruby-version)
+      ensure_value "$1" "$#" "${2-}"
+      RUBY_VERSION="${2-}"
+      shift 2
+      ;;
+    --nodejs-version)
+      ensure_value "$1" "$#" "${2-}"
+      NODEJS_VERSION="${2-}"
+      shift 2
+      ;;
     --environments)
       ensure_value "$1" "$#" "${2-}"
       ENVIRONMENTS="${2-}"
@@ -166,6 +176,8 @@ missing=()
 [[ -z "$AWS_PROFILE" ]] && missing+=("--aws-profile")
 [[ -z "$AWS_REGION" ]] && missing+=("--aws-region")
 [[ -z "$PROJECT" ]] && missing+=("--project")
+[[ -z "$RUBY_VERSION" ]] && missing+=("--ruby-version")
+[[ -z "$NODEJS_VERSION" ]] && missing+=("--nodejs-version")
 
 if [[ ${#missing[@]} -gt 0 ]]; then
   echo "Missing required arguments: ${missing[*]}" >&2
@@ -228,7 +240,7 @@ fi
 #-------------------- locals.tf --------------------#
 echo "Preparing ${PWD}/locals.tf file..."
 if [[ ! -f locals.tf ]]; then
-  envsubst < "${TEMPLATES_DIRECTORY}/locals.tf.envsubst" > locals.tf
+  envsubst '' < "${TEMPLATES_DIRECTORY}/locals.tf.envsubst" > locals.tf
   terraform fmt -list=false locals.tf
 fi
 
@@ -315,3 +327,9 @@ bootstrap_terraform_network.sh --environments "${ENVIRONMENTS}"
 echo "********************* DB RDS Postgres Bootstrap *********************"
 
 bootstrap_terraform_db.sh --environments "${ENVIRONMENTS}"
+
+#-------------------- Build and push image ---------------------#
+
+echo "********************* Build and Push Image Bootstrap *********************"
+
+bootstrap_terraform_build_and_push_image.sh --environments "${ENVIRONMENTS}" --ruby-version "${RUBY_VERSION}" --nodejs-version "${NODEJS_VERSION}"

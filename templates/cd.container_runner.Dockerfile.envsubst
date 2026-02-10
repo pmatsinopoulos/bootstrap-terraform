@@ -1,0 +1,85 @@
+ARG RUBY_VERSION=${ruby_version}
+FROM ruby:$RUBY_VERSION-bookworm
+
+RUN install -m 0755 -d /etc/apt/keyrings
+
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+  && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/nodesource.gpg \
+  && echo "deb [signed-by=/etc/apt/trusted.gpg.d/nodesource.gpg] https://deb.nodesource.com/node_${nodejs_version}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+
+# Docker CLI installation
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
+  chmod a+r /etc/apt/keyrings/docker.asc
+
+RUN echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# end of docker
+# -------------
+
+ARG APP_USER=play
+ARG APP_GROUP=play
+
+ENV LANG C.UTF-8
+ENV HOME=/home/${APP_USER}
+ENV RAILS_ROOT=/usr/src/app
+ARG JEMALLOC_VERSION=5.3.0
+
+# We create the directory /home/play
+# In the "/home/play/vendor/bundle" it is where bundler is going
+# to put gems in
+#
+RUN mkdir -p ${HOME}
+RUN chown -R root:root ${HOME}
+
+RUN wget https://github.com/jemalloc/jemalloc/releases/download/5.3.0/jemalloc-${JEMALLOC_VERSION}.tar.bz2
+RUN tar vjxf jemalloc-${JEMALLOC_VERSION}.tar.bz2
+WORKDIR /jemalloc-${JEMALLOC_VERSION}
+RUN ./configure
+RUN make
+RUN make install
+
+WORKDIR ${RAILS_ROOT}
+
+COPY .tool-versions ${RAILS_ROOT}
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+  unzip awscliv2.zip && \
+  ./aws/install && \
+  rm awscliv2.zip \
+  rm -f -R aws
+
+RUN apt-get update && \
+  NODEJS_VERSION_NEEDED=$(grep -E -o '^nodejs [0-9]+\.[0-9]+\.[0-9]+' .tool-versions | cut -d" " -f2) && \
+  apt-get install -yqq --no-install-recommends \
+  ca-certificates \
+  docker-ce-cli docker-buildx-plugin \
+  yarn \
+  nodejs=${NODEJS_VERSION_NEEDED}-1nodesource1 \
+  dnsutils \
+  nano \
+  jq \
+  && apt-get autoremove -yqq \
+  && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man \
+  && apt-get clean \
+  && groupadd $APP_GROUP \
+  && useradd --gid $APP_GROUP --shell /bin/bash --create-home $APP_USER \
+  && chown -R $APP_USER:$APP_GROUP $RAILS_ROOT
+
+RUN BUNDLER_VERSION_NEEDED=$(grep -E -o '^bundler [0-9]+\.[0-9]+\.[0-9]+' .tool-versions | cut -d" " -f2) && \
+  gem install bundler -v ${BUNDLER_VERSION_NEEDED}
+
+ENV BUNDLE_CACHE_ALL="true"
+ENV BUNDLE_CACHE_ALL_PLATFORMS="true"
+ENV BUNDLE_CACHE_PATH='vendor/cache'
+ENV BUNDLE_PATH='vendor/bundle'
+ENV YARN_CACHE_FOLDER='vendor/yarncache'
+ENV LD_PRELOAD='/usr/local/lib/libjemalloc.so.2'
+
+RUN mkdir tmp
+RUN chown ${APP_USER}:${APP_USER} tmp
+
+RUN bundle config --global frozen 1

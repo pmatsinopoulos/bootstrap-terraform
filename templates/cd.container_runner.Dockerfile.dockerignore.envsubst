@@ -1,0 +1,77 @@
+# Version control files:
+.git/
+.gitignore
+
+# Docker files:
+.ci.Dockerfile.dockerignore
+.dockerignore
+*.dockerignore
+*Dockerfile
+docker-compose*.yml
+
+# environment files
+.envrc
+*.env
+*.env.production
+*.env.staging
+*.env.test
+**/.envrc
+
+# Log files:
+log/*.log
+
+# Temporary files:
+*.swo
+*.swp
+tmp/
+
+# OS artifacts:
+/**/.DS_Store
+
+# Development container's Home artifacts:
+/.bash_history
+/.bundle
+/.guard_history
+/.pry_history
+
+.eslintingnore
+.eslintrc.json
+.gitattributes
+.gitignore
+.idea/
+.nvmrc
+.pre-commit-config.yml
+.prettierignore
+.prettierrc
+.rspec
+.rspec
+.rubocop*.yml
+.ruby-gemset
+.ruby-version
+.solargraph.yml
+.vscode/
+*.code-workspace
+docs/
+features/
+log/
+node_modules/
+page_objects/
+prettierrc.json
+Procfile
+Procfile.dev
+Procfile.dev-hmr
+README.md
+README.rdoc
+routes.txt
+spec/
+terraform/
+terraform/bastion
+
+# DB backups
+*.dump
+
+db/schema.rb
+
+jmeter/*.csv
+jmeter/responses/
+jmeter/user.properties

@@ -1,0 +1,42 @@
+# We use the Docker Hub public image `pmatsino/ruby-${ruby_version}-bookworm-docker-cli-aws-nodejs-${nodejs_version}-yarn:latest` as the
+# base image of the container the Github Workflow runs in.
+#
+# This image, is built from the `cd.container_runner.Dockerfile` with the following command:
+#
+# ```bash
+# $ docker build -f ./cd.container_runner.Dockerfile -t pmatsino/ruby-${ruby_version}-bookworm-docker-cli-aws-nodejs-${nodejs_version}-yarn:latest .
+# ```
+#
+# Then it is pushed to `pmatsino` account on Docker Hub:
+#
+# ```bash
+# $ docker push pmatsino/ruby-${ruby_version}-bookworm-docker-cli-aws-nodejs-${nodejs_version}-yarn:latest
+# ```
+#
+# Note that the same image is used to build the image that we run Web server and Workers in. See the [ecs.main.Dockerfile](./ecs.main.Dockerfile). It is
+# important that these images are built using the same image that we use in the deployment to prepare the `node_modules`, the gems in `vendor/bundle` and the
+# assets in `public/assets` and `public/packs`.
+
+FROM pmatsino/ruby-${ruby_version}-bookworm-docker-cli-aws-nodejs-${nodejs_version}-yarn:latest
+
+# Copy project. Note that we copy over the following paths
+#
+# - vendor/bundle
+# - node_modules
+# - public/assets
+# - public/packs
+#
+# too. Hence the following 'bundle install', 'yarn install' and assets precompile commands will be very fast.
+# Note that the Github workflow that builds this images and pushes to ECR runs these commands before building
+# the images. Hence, their content will be correct/accurate/up-to-date.
+#
+COPY --chown=$APP_USER:$APP_GROUP . $RAILS_ROOT
+
+RUN bundle cache --no-install
+RUN bundle install
+
+RUN yarn install --frozen-lockfile --non-interactive --cache-folder "${YARN_CACHE_FOLDER}"
+
+EXPOSE 80
+
+ENTRYPOINT [ "./entrypoint.sh" ]

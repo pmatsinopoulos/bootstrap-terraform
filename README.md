@@ -31,7 +31,9 @@ bootstrap_terraform.sh \
   --repository-url 'https://github.com/pmatsinopoulos/my-fantastic-web-app' \
   --aws-profile 'aws-profile-default' \
   --aws-region eu-west-1 \
-  --project my-fantastic-web-app
+  --project my-fantastic-web-app \
+  --ruby-version 3.4.8 \
+  --nodejs-version 20
 ```
 
 ## For `staging` environment:
@@ -45,6 +47,8 @@ bootstrap_terraform.sh \
   --aws-profile 'aws-profile-default' \
   --aws-region eu-west-1 \
   --project my-fantastic-web-app \
+  --ruby-version 3.4.8 \
+  --nodejs-version 20 \
   --environments staging
 ```
 
@@ -59,6 +63,8 @@ bootstrap_terraform.sh \
   --aws-profile 'aws-profile-default' \
   --aws-region eu-west-1 \
   --project my-fantastic-web-app \
+  --ruby-version 3.4.8 \
+  --nodejs-version 20 \
   --environments 'production,staging'
 ```
 
