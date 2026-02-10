@@ -333,3 +333,9 @@ bootstrap_terraform_db.sh --environments "${ENVIRONMENTS}"
 echo "********************* Build and Push Image Bootstrap *********************"
 
 bootstrap_terraform_build_and_push_image.sh --environments "${ENVIRONMENTS}" --ruby-version "${RUBY_VERSION}" --nodejs-version "${NODEJS_VERSION}"
+
+#-------------------- ECS ---------------------#
+
+echo "********************* ECS Bootstrap *********************"
+
+bootstrap_terraform_ecs.sh --environments "${ENVIRONMENTS}"

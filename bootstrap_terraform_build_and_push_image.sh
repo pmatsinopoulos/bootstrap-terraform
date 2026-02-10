@@ -37,9 +37,13 @@ usage() {
   cat <<'EOF'
 Usage:
   bootstrap_terraform_build_and_push_image.sh \
+    --ruby-version <version> \
+    --nodejs-version <version> \
     [--environments "production, staging, development"]
 
 Required:
+  --ruby-version
+  --nodejs-version
 
 Optional:
   --environments    Comma-separated list (default: "production")
