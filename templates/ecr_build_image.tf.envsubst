@@ -1,0 +1,48 @@
+resource "time_static" "server_code_update" {
+  triggers = {
+    server_source_code_change = local.server_sha1
+  }
+}
+
+resource "terraform_data" "build_main_image_and_push_to_ecr" {
+  depends_on = [
+    aws_ecr_repository.main
+  ]
+
+  triggers_replace = {
+    server_source_code_change = local.server_sha1
+  }
+
+  provisioner "local-exec" {
+    working_dir = "../../"
+    command     = "./build_image.sh ${local.server_name} ecs.main.Dockerfile ${var.environment}"
+  }
+
+  provisioner "local-exec" {
+    command = "docker tag ${local.server_name}:latest ${aws_ecr_repository.main.repository_url}:${local.server_image_tag}"
+  }
+
+  provisioner "local-exec" {
+    command = "docker tag ${local.server_name}:latest ${aws_ecr_repository.main.repository_url}:${local.server_image_tag_sha1}"
+  }
+
+  provisioner "local-exec" {
+    command = "docker tag ${local.server_name}:latest ${aws_ecr_repository.main.repository_url}:latest"
+  }
+
+  provisioner "local-exec" {
+    command = "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${local.docker_server}"
+  }
+
+  provisioner "local-exec" {
+    command = "docker push ${aws_ecr_repository.main.repository_url}:${local.server_image_tag}"
+  }
+
+  provisioner "local-exec" {
+    command = "docker push ${aws_ecr_repository.main.repository_url}:${local.server_image_tag_sha1}"
+  }
+
+  provisioner "local-exec" {
+    command = "docker push ${aws_ecr_repository.main.repository_url}:latest"
+  }
+}

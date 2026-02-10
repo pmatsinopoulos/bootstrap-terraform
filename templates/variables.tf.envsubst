@@ -74,3 +74,8 @@ variable "db_access_details" {
   nullable  = false
   sensitive = true
 }
+
+variable "main_image_tag_override" {
+  type    = string
+  default = "-"
+}

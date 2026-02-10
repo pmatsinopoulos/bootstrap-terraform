@@ -1,4 +1,59 @@
 locals {
   current_account_id = data.aws_caller_identity.current.account_id
   current_user_arn   = data.aws_caller_identity.current.arn
+
+  image_name = "${var.project}-${var.environment}"
+
+  // ------------------------------- Web application server ---------------------- //
+  server_name = local.image_name
+
+  working_dir = "../.."
+  server_code_fileset_initial_1 = fileset(
+    local.working_dir,
+    "**/{.env.${var.environment},new_image.hex,*.ru,*.rake,*.html,*.sh,*.html.haml,*.erb,*.rabl,*.jbuilder,*.builder,*.js,*.jsx,*.ts,*.tsx,*.css,*.csv,*.xml,*.scss,*.png,*.bmp,*.jpg,*.rb,cd.container_runner.Dockerfile,ecs.main.Dockerfile,cd.container_runner.Dockerfile.dockerignore,ecs.main.Dockerfile.dockerignore,Gemfile,Gemfile.lock,yarn.lock,postcss.config.js,Rakefile,*.yml,*.json,*.sh}"
+  )
+  server_code_fileset_1 = sort([
+    for file in local.server_code_fileset_initial_1 :
+    file if file != "node_modules" && !startswith(file, "node_modules/") &&
+    file != "spec" && !startswith(file, "spec/") &&
+    !startswith(file, "public/packs/") &&
+    !startswith(file, "public/packs-test/") &&
+    !startswith(file, "public/uploads/") &&
+    !startswith(file, "public/assets/") &&
+    !startswith(file, "app/assets/builds/") &&
+    file != "storage" && !startswith(file, "storage/") &&
+    file != "terraform" && !startswith(file, "terraform/") &&
+    file != "tmp" && !startswith(file, "tmp/") &&
+    file != "log" && !startswith(file, "log/") &&
+    !startswith(file, "vendor/bundle/") &&
+    !startswith(file, "vendor/ruby/") &&
+    !startswith(file, "vendor/yarncache/") &&
+    !startswith(file, "vendor/cache/") &&
+    !startswith(file, ".ruby-lsp/") &&
+    file != "db/schema.rb" &&
+    file != "rollback-staging.txt" &&
+    file != "rollback-production.txt" &&
+    file != "terraform/rollback" &&
+    file != ".github/workflows/rollback_last_deployment_staging.yml"
+  ])
+
+  server_code_fileset_1_file_sha_map = {
+    for f in local.server_code_fileset_1 : f => filesha1("${local.working_dir}/${f}")
+  }
+
+  server_sha1 = sha1(
+    join("",
+      concat(
+        values(local.server_code_fileset_1_file_sha_map)
+      )
+    )
+  )
+
+  server_image_tag      = formatdate("YYYYMMDDhhmmss", time_static.server_code_update.rfc3339)
+  server_image_tag_sha1 = local.server_sha1
+
+  docker_server = "${local.current_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+
+  final_main_image = var.main_image_tag_override == "-" ? local.server_image_tag : var.main_image_tag_override
+  // --------------- end of Web Application Server --------------------------------------------------- //
 }
