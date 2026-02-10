@@ -196,7 +196,7 @@ export aws_region=${AWS_REGION}
 export company=${COMPANY}
 export project=${PROJECT}
 if [[ ! -f .envrc ]]; then
-  envsubst < "${TEMPLATES_DIRECTORY}/.envrc.envsubst" > .envrc
+  envsubst '$aws_profile $aws_region $company $project' < "${TEMPLATES_DIRECTORY}/.envrc.envsubst" > .envrc
 fi
 direnv allow .
 eval "$(direnv export bash)"
@@ -223,6 +223,20 @@ echo "Preparing ${PWD}/variables.tf file..."
 if [[ ! -f variables.tf ]]; then
   envsubst < "${TEMPLATES_DIRECTORY}/variables.tf.envsubst" > variables.tf
   terraform fmt -list=false variables.tf
+fi
+
+#-------------------- locals.tf --------------------#
+echo "Preparing ${PWD}/locals.tf file..."
+if [[ ! -f locals.tf ]]; then
+  envsubst < "${TEMPLATES_DIRECTORY}/locals.tf.envsubst" > locals.tf
+  terraform fmt -list=false locals.tf
+fi
+
+#-------------------- data.tf --------------------#
+echo "Preparing ${PWD}/data.tf file..."
+if [[ ! -f data.tf ]]; then
+  envsubst < "${TEMPLATES_DIRECTORY}/data.tf.envsubst" > data.tf
+  terraform fmt -list=false data.tf
 fi
 
 #-------------------- environments --------------------#
@@ -261,8 +275,18 @@ for raw_environment in "${environment_list[@]}"; do
   echo "Creating symbolic link for variables.tf"
   ln -sfn ../variables.tf variables.tf
 
-  echo "Creating an empty terraform.tfvars file for environment-specific variable values"
-  touch terraform.tfvars
+  echo "Creating symbolic link for locals.tf"
+  ln -sfn ../locals.tf locals.tf
+
+  echo "Creating symbolic link for data.tf"
+  ln -sfn ../data.tf data.tf
+
+  #-------------------- terraform.tfvars --------------------#
+  echo "Preparing ${PWD}/terraform.tfvars file..."
+  if [[ ! -f terraform.tfvars ]]; then
+    envsubst < "${TEMPLATES_DIRECTORY}/terraform.tfvars.envsubst" > terraform.tfvars
+    terraform fmt -list=false terraform.tfvars
+  fi
 
   echo "Running terraform providers lock..."
   terraform providers lock --platform=linux_amd64 --platform=darwin_amd64 --platform=windows_amd64
@@ -285,3 +309,9 @@ popd > /dev/null
 echo "********************* Network Bootstrap *********************"
 
 bootstrap_terraform_network.sh --environments "${ENVIRONMENTS}"
+
+#-------------------- DB RDS Postgres ---------------------#
+
+echo "********************* DB RDS Postgres Bootstrap *********************"
+
+bootstrap_terraform_db.sh --environments "${ENVIRONMENTS}"

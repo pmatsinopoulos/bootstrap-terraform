@@ -1,0 +1,39 @@
+vpc_cidr_block = "x.y.z.w/dd" # ddd IP addresses
+
+vpc_subnets = {
+  1 : {
+    cidr_block : "x.y.z.w/dd" # ddd IP addresses
+    region_suffix : "a"
+  },
+  2 : {
+    cidr_block : "x.y.z.w/dd" # ddd IP addresses
+    region_suffix : "b"
+  },
+  3 : {
+    cidr_block : "x.y.z.w/dd" # ddd IP addresses
+    region_suffix : "c"
+  }
+}
+
+db_server = {
+  allocated_storage                        = ddd // 128
+  database_insights_mode                   = "xxx" // "advanced"
+  engine_version                           = "xx.yy" // "16.10"
+  free_storage_space_alarm_threshold_in_db = ddddddddddd // 10737418240      // 10 GB
+  instance_class                           = "db.xxxxx.xxxxxx" // "db.t4g.2xlarge" // 8vCPU and 32 GiB RAM EBS up to 2780Mbps
+  // instance_class_read_only_replica      = "db.xxxxx.xxxxxx" // "db.t4g.2xlarge", set this property only if enable_read_replica is true
+  max_allocated_storage                    = ddd // 896
+  performance_insights_retention_period    = ddd // 465 # 15 months
+  storage_type                             = "xxx" // "gp3"
+  enable_read_replica                      = false // true | false. If true, then the instance_class_read_only_replica needs to be present
+  provisioned_iops                         = dddd // 5000, It is valid for specific storage types
+  publicly_accessible                      = false // true
+  port                                     = 5432 // 5432
+  db_name = "xxxxxxx" // my_fantastic_app_production
+}
+
+db_backup_config = {
+  rds_service_backup_retention_days  = 1 // 35   # 5 weeks
+  // aws_backup_cold_storage_after_days = 2 // 60   # 2 months
+  // aws_backup_retention_days          = 2 // 1461 # 4 years
+}

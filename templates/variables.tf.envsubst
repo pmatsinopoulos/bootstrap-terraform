@@ -31,3 +31,46 @@ variable "vpc_subnets" {
   description = "A map of CIDR blocks and regions for each one of the three subnets."
   nullable    = false
 }
+
+variable "db_server" {
+  type = object({
+    allocated_storage                        = number
+    database_insights_mode                   = string
+    engine_version                           = string
+    free_storage_space_alarm_threshold_in_db = number
+    instance_class                           = string
+    instance_class_read_only_replica         = optional(string)
+    max_allocated_storage                    = number
+    performance_insights_retention_period    = number
+    storage_type                             = string
+    enable_read_replica                      = optional(bool, true)
+    provisioned_iops                         = optional(number)
+    publicly_accessible                      = bool
+    port                                     = number
+    db_name                                  = string
+  })
+  nullable = false
+
+  validation {
+    condition     = var.db_server.enable_read_replica == false || var.db_server.instance_class_read_only_replica != null
+    error_message = "instance_class_read_only_replica must be set when enable_read_replica is true"
+  }
+}
+
+variable "db_backup_config" {
+  type = object({
+    rds_service_backup_retention_days  = number
+    // aws_backup_cold_storage_after_days = number
+    // aws_backup_retention_days          = number
+  })
+  nullable = false
+}
+
+variable "db_access_details" {
+  type = object({
+    username = string
+    password = string
+  })
+  nullable  = false
+  sensitive = true
+}
