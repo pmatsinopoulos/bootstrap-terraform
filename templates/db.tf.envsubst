@@ -69,3 +69,9 @@ output "db_identifier" {
 
   description = "This is the RDS/database db identifier"
 }
+
+output "db_psql_command" {
+  value = "psql -h ${aws_db_instance.db.address} -p ${aws_db_instance.db.port} -d ${var.db_server.db_name}"
+
+  description = "This is the psql command that will allow you to connect to db"
+}
