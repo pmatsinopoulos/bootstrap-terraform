@@ -114,6 +114,13 @@ if [[ ! -f db_instance_enhanced_monitoring_role.tf ]]; then
   terraform fmt -list=false db_instance_enhanced_monitoring_role.tf
 fi
 
+#-------------------- db_migrations.tf --------------------#
+echo "Preparing ${PWD}/db_migrations.tf file..."
+if [[ ! -f db_migrations.tf ]]; then
+  envsubst '' < "${TEMPLATES_DIRECTORY}/db_migrations.tf.envsubst" > db_migrations.tf
+  terraform fmt -list=false db_migrations.tf
+fi
+
 #-------------------- environments --------------------#
 IFS=',' read -ra environment_list <<< "${ENVIRONMENTS}"
 for raw_environment in "${environment_list[@]}"; do
@@ -133,6 +140,9 @@ for raw_environment in "${environment_list[@]}"; do
 
   echo "Creating symbolic link for db.tf"
   ln -sfn ../db.tf db.tf
+
+  echo "Creating symbolic link for db_migrations.tf"
+  ln -sfn ../db_migrations.tf db_migrations.tf
 
   popd > /dev/null
 done

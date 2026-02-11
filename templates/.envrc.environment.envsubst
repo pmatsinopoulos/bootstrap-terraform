@@ -1,4 +1,5 @@
 export ENVIRONMENT=${environment}
+export RAILS_ENV=${environment}
 
 dotenv_if_exists ../../.env.${environment}
 source_env ../.envrc

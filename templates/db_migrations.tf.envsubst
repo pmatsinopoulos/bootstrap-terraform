@@ -1,0 +1,27 @@
+locals {
+  db_migrations_working_dir = "../../db/migrate"
+  db_migrations_fileset_1   = fileset(local.db_migrations_working_dir, "*.rb")
+  db_migrations_sha1 = sha1(
+    join("",
+      concat(
+        [for f in local.db_migrations_fileset_1 : filesha1("${local.db_migrations_working_dir}/${f}")]
+      )
+    )
+  )
+}
+
+resource "terraform_data" "db_migrations" {
+  # I want the db_migrations to take place as late as possible and closer
+  # to the deployment of the service. That's why I set it to be after
+  # building the image which takes quite a lot of time.
+  depends_on = [terraform_data.build_main_image_and_push_to_ecr]
+
+  triggers_replace = {
+    db_migrations_code_update = local.db_migrations_sha1
+  }
+
+  provisioner "local-exec" {
+    working_dir = "../../"
+    command     = "DATABASE_HOST=${aws_db_instance.db.address} DATABASE_STATEMENT_TIMEOUT=1800000 DATABASE_DB=${var.db_server.db_name} DATABASE_PORT=${var.db_server.port} bundle exec dotenv -f \".env.${var.environment}\" rake db:migrate"
+  }
+}
