@@ -79,3 +79,19 @@ variable "main_image_tag_override" {
   type    = string
   default = "-"
 }
+
+variable "server" {
+  type = object({
+    log_level         = string
+    number_of_threads = number
+    number_of_workers = number
+    port              = number
+  })
+  nullable = false
+}
+
+variable "secret_key_base" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}

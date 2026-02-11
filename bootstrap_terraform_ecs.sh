@@ -88,6 +88,14 @@ if [[ ! -f ecs_cluster.tf ]]; then
   terraform fmt -list=false ecs_cluster.tf
 fi
 
+#-------------------- environment.tf --------------------#
+echo "Preparing ${PWD}/environment.tf file..."
+
+if [[ ! -f environment.tf ]]; then
+  envsubst < "${TEMPLATES_DIRECTORY}/environment.tf.envsubst" > environment.tf
+  terraform fmt -list=false environment.tf
+fi
+
 #-------------------- environments --------------------#
 IFS=',' read -ra environment_list <<< "${ENVIRONMENTS}"
 for raw_environment in "${environment_list[@]}"; do
@@ -102,6 +110,9 @@ for raw_environment in "${environment_list[@]}"; do
 
   echo "Creating symbolic link for ecs_cluster.tf"
   ln -sfn ../ecs_cluster.tf ecs_cluster.tf
+
+  echo "Creating symbolic link for environment.tf"
+  ln -sfn ../environment.tf environment.tf
 
   popd > /dev/null
 done

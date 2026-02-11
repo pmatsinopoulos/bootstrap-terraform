@@ -11,3 +11,4 @@ export TF_VAR_project='${project}'
 export TF_VAR_aws_region=${aws_region}
 export TF_VAR_company='${company}'
 export TF_VAR_db_access_details="{\"username\":\"${DATABASE_USERNAME}\",\"password\":\"${DATABASE_PASSWORD}\"}"
+export TF_VAR_secret_key_base="${SECRET_KEY_BASE}"

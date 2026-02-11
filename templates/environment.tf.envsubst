@@ -1,0 +1,88 @@
+locals {
+  environment = [
+    {
+      name  = "APP_ENV"
+      value = "${var.environment}"
+    },
+    {
+      name  = "AWS_REGION"
+      value = "${var.aws_region}"
+    },
+    {
+      name  = "AWS_ACCOUNT_ID",
+      value = "${local.current_account_id}"
+    },
+    {
+      name  = "DATABASE_HOST"
+      value = "${aws_db_instance.db.address}"
+    },
+    {
+      name  = "DATABASE_DB"
+      value = "${var.db_server.db_name}"
+    },
+    {
+      name  = "DATABASE_PASSWORD"
+      value = "${var.db_access_details.password}"
+    },
+    {
+      name  = "DATABASE_PORT"
+      value = "${tostring(aws_db_instance.db.port)}"
+    },
+    {
+      name  = "DATABASE_URL"
+      value = "postgres://${var.db_access_details.username}:${var.db_access_details.password}@${aws_db_instance.db.endpoint}/${var.db_server.db_name}"
+    },
+    {
+      name  = "DATABASE_USERNAME"
+      value = "${var.db_access_details.username}"
+    },
+    {
+      name  = "DEFAULT_REGION"
+      value = "${var.aws_region}"
+    },
+    {
+      name  = "LANG"
+      value = "en_US.UTF-8"
+    },
+    {
+      name  = "LOG_LEVEL"
+      value = "${var.server.log_level}"
+    },
+    {
+      name  = "RAILS_MAX_THREADS"
+      value = "${tostring(var.server.number_of_threads)}"
+    },
+    {
+      name  = "PORT"
+      value = "${tostring(var.server.port)}"
+    },
+    {
+      name  = "PROJECT"
+      value = "${var.project}"
+    },
+    {
+      name  = "RACK_ENV"
+      value = "${var.environment}"
+    },
+    {
+      name  = "RAILS_ENV"
+      value = "${var.environment}"
+    },
+    {
+      name  = "RAILS_LOG_TO_STDOUT"
+      value = "enabled"
+    },
+    {
+      name  = "RAILS_SERVE_STATIC_FILES"
+      value = "enabled"
+    },
+    {
+      name  = "SECRET_KEY_BASE"
+      value = "${var.secret_key_base}"
+    },
+    {
+      name  = "WEB_CONCURRENCY"
+      value = "${tostring(var.server.number_of_workers)}"
+    }
+  ]
+}

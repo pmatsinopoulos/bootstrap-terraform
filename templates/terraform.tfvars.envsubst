@@ -37,3 +37,10 @@ db_backup_config = {
   // aws_backup_cold_storage_after_days = 2 // 60   # 2 months
   // aws_backup_retention_days          = 2 // 1461 # 4 years
 }
+
+server = {
+  log_level                                                 = "INFO"
+  number_of_threads                                         = 2
+  number_of_workers                                         = 2
+  port                                                      = 80
+}
