@@ -82,10 +82,16 @@ variable "main_image_tag_override" {
 
 variable "server" {
   type = object({
-    log_level         = string
-    number_of_threads = number
-    number_of_workers = number
-    port              = number
+    aws_cloudwatch_log_group_retention_in_days = number
+    cpu                                        = number // see: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html
+    desired_number_of_tasks                    = number
+    elb_logs_retention_days                    = number
+    log_level                                  = string
+    memory                                     = string
+    number_of_threads                          = number
+    number_of_workers                          = number
+    port                                       = number
+    name                                       = string
   })
   nullable = false
 }

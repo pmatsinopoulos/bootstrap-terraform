@@ -39,8 +39,14 @@ db_backup_config = {
 }
 
 server = {
+  aws_cloudwatch_log_group_retention_in_days                = 5
+  cpu                                                       = 2048 // 2 vCPU see: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html
+  desired_number_of_tasks                                   = 2
+  elb_logs_retention_days                                   = 2
   log_level                                                 = "INFO"
+  memory                                                    = 4096 // 4 GBytes. see: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html
   number_of_threads                                         = 2
   number_of_workers                                         = 2
   port                                                      = 80
+  name                                                      = "${server_name}"
 }

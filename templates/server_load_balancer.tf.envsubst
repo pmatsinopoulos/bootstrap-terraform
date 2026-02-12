@@ -1,0 +1,117 @@
+resource "aws_lb_target_group" "server" {
+  name        = "${substr(var.project, 0, 21)}-${substr(var.environment, 0, 3)}-server"
+  target_type = "ip"
+  port        = var.server.port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  health_check {
+    enabled             = true
+    healthy_threshold   = 3
+    interval            = 30
+    matcher             = "200-399"
+    path                = "/health"
+    timeout             = 25
+    unhealthy_threshold = 3
+  }
+  slow_start = 30
+
+  // If I remove the +stickiness+ block completely, then
+  // For some reason it applies lb_cookie with 1 day duration
+  //
+  stickiness {
+    type            = "lb_cookie"
+    enabled         = false
+    cookie_duration = 1
+  }
+
+  tags = {
+    "Name" = "${var.project}-${var.environment}-server"
+  }
+}
+
+resource "aws_lb" "server" {
+  name                             = "${substr(var.project, 0, 21)}-${substr(var.environment, 0, 3)}-server"
+  load_balancer_type               = "application"
+  internal                         = false
+  ip_address_type                  = "ipv4"
+  enable_cross_zone_load_balancing = true # for "application" LB this feature is always enabled.
+
+  subnets = [
+    for k, v in var.vpc_subnets : aws_subnet.main[k].id
+  ]
+
+  security_groups = [
+    aws_vpc.main.default_security_group_id,
+    aws_security_group.open_port_80.id,
+    aws_security_group.open_port_443.id
+  ]
+
+  drop_invalid_header_fields = true
+
+  enable_http2 = true
+
+  enable_tls_version_and_cipher_suite_headers = true
+
+  enable_xff_client_port     = false    # this needs to be false, otherwise both the IP and the PORT are coming together (e.g. 192.168.2.1:234234) and remote IP cannot be derived and hence location cannot be derived either.
+  xff_header_processing_mode = "append" # this is needed in order to make sure that any X Forwarded For headers are coming in.
+  preserve_host_header       = true
+
+  # TODO: Will I need AWS WAF?. If the load balancer is WAF-enabled, then I might need to consider this
+  #
+  # enable_waf_fail_open = true | false
+
+  access_logs {
+    bucket  = aws_s3_bucket.server_load_balancer_logs.id
+    enabled = true
+  }
+
+  tags = {
+    "Name" = "${var.project}-${var.environment}-server"
+  }
+}
+
+resource "aws_lb_listener" "play_server_80" {
+  load_balancer_arn = aws_lb.server.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  depends_on = [aws_lb_target_group.server]
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+  tags = {
+    "Name" = "${var.project}-${var.environment}-server-80"
+  }
+}
+
+resource "aws_lb_listener" "server_443" {
+  load_balancer_arn = aws_lb.server.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate.main.arn
+
+  depends_on = [aws_lb_target_group.server]
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.server.arn
+  }
+
+  tags = {
+    "Name" = "${var.project}-${var.environment}-server-443"
+  }
+}
+
+output "load_balancer_endpoint" {
+  value       = aws_lb.server.dns_name
+  description = "The Application Load Balancer public DNS name to use in DNS table for routing"
+}

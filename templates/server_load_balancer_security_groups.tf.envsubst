@@ -1,0 +1,35 @@
+resource "aws_security_group" "open_port_80" {
+  name        = "${var.project}-${var.environment}-security-group-80"
+  description = "Allow 80 traffic from anywhere to anywhere"
+  vpc_id      = aws_vpc.main.id
+  tags = {
+    "Name" = "${var.project}-${var.environment}-security-group-80"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "open_port_80" {
+  security_group_id = aws_security_group.open_port_80.id
+  description       = "Incoming traffic to 80 from anywhere"
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 80
+  to_port           = 80
+  ip_protocol       = "tcp"
+}
+
+resource "aws_security_group" "open_port_443" {
+  name        = "${var.project}-${var.environment}-security-group-443"
+  description = "Allow 443 traffic from anywhere to anywhere"
+  vpc_id      = aws_vpc.main.id
+  tags = {
+    "Name" = "${var.project}-${var.environment}-security-group-443"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "open_port_443" {
+  security_group_id = aws_security_group.open_port_443.id
+  description       = "Incoming traffic from anywhere to 443"
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+}

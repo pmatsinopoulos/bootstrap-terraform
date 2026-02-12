@@ -1,0 +1,49 @@
+resource "aws_s3_bucket" "server_load_balancer_logs" {
+  bucket = "${var.company}-${var.project}-${var.environment}-server-logs"
+
+  force_destroy = true
+
+  tags = {
+    Name = "${var.company}-${var.project}-${var.environment}-server-logs"
+  }
+}
+
+# Ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html#attach-bucket-policy
+data "aws_iam_policy_document" "logs_allow_access_from_elb_account" {
+  statement {
+    sid    = "AllowELBLogDelivery"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    actions = [
+      "s3:PutObject",
+    ]
+
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.server_load_balancer_logs.bucket}/AWSLogs/${local.current_account_id}/*"
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "logs_allow_access_from_elb_account" {
+  bucket = aws_s3_bucket.server_load_balancer_logs.id
+  policy = data.aws_iam_policy_document.logs_allow_access_from_elb_account.json
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "server_load_balancer_logs" {
+  bucket = aws_s3_bucket.server_load_balancer_logs.id
+  rule {
+    id = "delete-objects-older-than-${var.server.elb_logs_retention_days}-days"
+    filter {
+      object_size_greater_than = 0
+    } # apply to all objects in the bucket
+    expiration {
+      days = var.server.elb_logs_retention_days
+    }
+    status = "Enabled"
+  }
+}
