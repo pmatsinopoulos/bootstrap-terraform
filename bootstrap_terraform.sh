@@ -99,6 +99,9 @@ REPOSITORY_URL=""
 AWS_PROFILE=""
 AWS_REGION=""
 PROJECT=""
+DOMAIN_NAME=""
+RUBY_VERSION=""
+NODEJS_VERSION=""
 # The ENVIRONMENTS can be a comma-separated list of environments,
 # e.g. "production, staging, development", which will be used to create separate folders for each environment under the terraform folder.
 # It will have the default value `production` if not provided.
@@ -151,6 +154,11 @@ while [[ $# -gt 0 ]]; do
       NODEJS_VERSION="${2-}"
       shift 2
       ;;
+    --domain-name)
+      ensure_value "$1" "$#" "${2-}"
+      DOMAIN_NAME="${2-}"
+      shift 2
+      ;;
     --environments)
       ensure_value "$1" "$#" "${2-}"
       ENVIRONMENTS="${2-}"
@@ -178,6 +186,7 @@ missing=()
 [[ -z "$PROJECT" ]] && missing+=("--project")
 [[ -z "$RUBY_VERSION" ]] && missing+=("--ruby-version")
 [[ -z "$NODEJS_VERSION" ]] && missing+=("--nodejs-version")
+[[ -z "$DOMAIN_NAME" ]] && missing+=("--domain-name")
 
 if [[ ${#missing[@]} -gt 0 ]]; then
   echo "Missing required arguments: ${missing[*]}" >&2
@@ -262,6 +271,8 @@ for raw_environment in "${environment_list[@]}"; do
   mkdir -p "${environment}"
   pushd "${environment}" > /dev/null
 
+  # ----------------- .envrc ----------------- #
+
   echo "Preparing ${PWD}/.envrc file..."
   export environment="${environment}"
   if [[ ! -f .envrc ]]; then
@@ -271,6 +282,8 @@ for raw_environment in "${environment_list[@]}"; do
   direnv allow .
   eval "$(direnv export bash)"
 
+  # -------------------- backend.tf --------------------#
+
   echo "Preparing ${PWD}/backend.tf file..."
   export terraform_remote_state_s3_bucket_name="${TERRAFORM_REMOTE_STATE_S3_BUCKET}"
   if [[ ! -f backend.tf ]]; then
@@ -278,25 +291,37 @@ for raw_environment in "${environment_list[@]}"; do
     terraform fmt -list=false backend.tf
   fi
 
+  # -------------------- main.tf -------------------- #
+
   echo "Creating symbolic link for main.tf"
   ln -sfn ../main.tf main.tf
+
+  # -------------------- providers.tf --------------------#
 
   echo "Creating symbolic link for providers.tf"
   ln -sfn ../providers.tf providers.tf
 
+  # -------------------- variables.tf --------------------#
+
   echo "Creating symbolic link for variables.tf"
   ln -sfn ../variables.tf variables.tf
 
+  # -------------------- locals.tf --------------------#
+
   echo "Creating symbolic link for locals.tf"
   ln -sfn ../locals.tf locals.tf
+
+  # -------------------- data.tf --------------------#
 
   echo "Creating symbolic link for data.tf"
   ln -sfn ../data.tf data.tf
 
   #-------------------- terraform.tfvars --------------------#
+
   echo "Preparing ${PWD}/terraform.tfvars file..."
   if [[ ! -f terraform.tfvars ]]; then
-    envsubst < "${TEMPLATES_DIRECTORY}/terraform.tfvars.envsubst" > terraform.tfvars
+    export server_name="${PROJECT}-server"
+    envsubst '$server_name' < "${TEMPLATES_DIRECTORY}/terraform.tfvars.envsubst" > terraform.tfvars
     terraform fmt -list=false terraform.tfvars
   fi
 
@@ -333,3 +358,9 @@ bootstrap_terraform_db.sh --environments "${ENVIRONMENTS}"
 echo "********************* Build and Push Image Bootstrap *********************"
 
 bootstrap_terraform_build_and_push_image.sh --environments "${ENVIRONMENTS}" --ruby-version "${RUBY_VERSION}" --nodejs-version "${NODEJS_VERSION}"
+
+#-------------------- ECS ---------------------#
+
+echo "********************* ECS Bootstrap *********************"
+
+bootstrap_terraform_ecs.sh --environments "${ENVIRONMENTS}" --domain-name "${DOMAIN_NAME}"

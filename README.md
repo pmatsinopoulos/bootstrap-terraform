@@ -33,6 +33,7 @@ bootstrap_terraform.sh \
   --aws-region eu-west-1 \
   --project my-fantastic-web-app \
   --ruby-version 3.4.8 \
+  --domain-name 'foo.matsinopoulos.gr' \
   --nodejs-version 20
 ```
 
@@ -49,6 +50,7 @@ bootstrap_terraform.sh \
   --project my-fantastic-web-app \
   --ruby-version 3.4.8 \
   --nodejs-version 20 \
+  --domain-name 'foo.matsinopoulos.gr' \
   --environments staging
 ```
 
@@ -65,6 +67,7 @@ bootstrap_terraform.sh \
   --project my-fantastic-web-app \
   --ruby-version 3.4.8 \
   --nodejs-version 20 \
+  --domain-name 'foo.matsinopoulos.gr' \
   --environments 'production,staging'
 ```
 

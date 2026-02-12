@@ -1,0 +1,81 @@
+resource "aws_ecs_task_definition" "main" {
+  family                   = "${var.project}-${var.environment}-server"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = var.server.cpu
+  memory                   = var.server.memory
+
+  task_role_arn = aws_iam_role.ecs_task_role.arn # OPTIONAL. You can use this instead of setting AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
+
+  # Mandatory:
+  execution_role_arn = aws_iam_role.ecs_task_execution.arn
+
+  depends_on = [
+    terraform_data.build_main_image_and_push_to_ecr
+  ]
+
+  container_definitions = jsonencode([
+    {
+      name      = var.server.name
+      image     = "${aws_ecr_repository.main.repository_url}:${local.final_main_image}"
+      essential = true
+      portMappings = [
+        {
+          containerPort = var.server.port
+        }
+      ]
+      cpu               = var.server.cpu
+      memory            = var.server.memory # MB, hard limit
+      memoryReservation = var.server.memory # MB, soft limit
+      environment = concat(
+        local.environment,
+        [
+          {
+            name  = "DATABASE_POOL"
+            value = "${tostring(var.server.number_of_workers * var.server.number_of_threads + 5)}"
+          }
+        ]
+      )
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "${aws_cloudwatch_log_group.server.id}"
+          awslogs-region        = "${var.aws_region}"
+          awslogs-create-group  = "true"
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+
+      stopTimeout = 60 # seconds
+
+      # Docker configuration
+      #
+      command = ["bin/rails", "s", "-p", "${tostring(var.server.port)}"]
+      #
+      # entrypoint = ["...", "..."]
+      #
+      # workingDirectory = "..."
+      #
+
+      # Ulimits (https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_Ulimit.html)
+      #
+      # ulimits = [
+      #   {
+      #     name = <core | cpu | data | fsize | locks | memlock | msgqueue | nice | nofile | nproc | rss | rtprio | rttime | sigpending | stack>,
+      #     hardLimit = <integer>,
+      #     softLimit = <integer>
+      #   },
+      #   { ... }
+      # ]
+    }
+  ])
+
+  tags = {
+    "Name" = "${var.project}-${var.environment}-server"
+  }
+}
+
+output "server_task_definition_revision" {
+  value       = aws_ecs_task_definition.main.revision
+  description = "The revision of the main server"
+}

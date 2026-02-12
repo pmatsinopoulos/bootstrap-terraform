@@ -1,0 +1,69 @@
+resource "aws_ecs_service" "server" {
+  name    = "${var.project}-${var.environment}-server"
+  cluster = aws_ecs_cluster.main.id
+
+  task_definition = aws_ecs_task_definition.main.arn
+
+  # depends_on = [
+  #   terraform_data.db_migrations
+  # ]
+
+  triggers = {
+    "task_definition_new_revisions" = aws_ecs_task_definition.main.revision
+  }
+
+  launch_type = "FARGATE"
+
+  scheduling_strategy = "REPLICA"
+  desired_count       = var.server.desired_number_of_tasks
+  # Deployment type is 'Rolling update'
+  deployment_minimum_healthy_percent = 100
+  # e.g for 1 desired task and 6 maximum tasks, the maximum percent is 1 * 600 = 600%
+  #     Hence, I can go up to 6 tasks
+  deployment_maximum_percent = 600
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  # Do I need Service Connect?
+
+  # Do I need Service Discovery?
+
+  network_configuration {
+    subnets = [
+      for k, v in var.vpc_subnets : aws_subnet.main[k].id
+    ]
+    security_groups  = [aws_vpc.main.default_security_group_id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.server.arn
+    container_name   = var.server.name
+    container_port   = var.server.port
+  }
+
+  wait_for_steady_state = true
+
+  enable_ecs_managed_tags = true
+
+  enable_execute_command = true
+
+  propagate_tags = "TASK_DEFINITION"
+
+  tags = {
+    "Name" = "${var.project}-${var.environment}-server"
+  }
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
+}
+
+output "server_service_name" {
+  value       = aws_ecs_service.server.name
+  description = "The name of the service for the server"
+}

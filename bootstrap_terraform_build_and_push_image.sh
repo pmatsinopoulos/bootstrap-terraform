@@ -37,9 +37,13 @@ usage() {
   cat <<'EOF'
 Usage:
   bootstrap_terraform_build_and_push_image.sh \
+    --ruby-version <version> \
+    --nodejs-version <version> \
     [--environments "production, staging, development"]
 
 Required:
+  --ruby-version
+  --nodejs-version
 
 Optional:
   --environments    Comma-separated list (default: "production")
@@ -86,8 +90,15 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   exit 1
 fi
 
+# --------------------- build_image.sh --------------------#
+echo "Preparing ${PWD}/build_image.sh file..."
 cp "${TEMPLATES_DIRECTORY}/build_image.sh" "${PWD}/build_image.sh"
 chmod +x "${PWD}/build_image.sh"
+
+# --------------------- entrypoint.sh --------------------#
+echo "Preparing ${PWD}/entrypoint.sh file..."
+cp "${TEMPLATES_DIRECTORY}/entrypoint.sh" "${PWD}/entrypoint.sh"
+chmod +x "${PWD}/entrypoint.sh"
 
 #-------------------- ecs.main.Dockerfile.dockerignore --------------------#
 echo "Preparing ${PWD}/ecs.main.Dockerfile.dockerignore file..."
